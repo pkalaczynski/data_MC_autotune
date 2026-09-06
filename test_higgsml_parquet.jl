@@ -1,3 +1,4 @@
+using Pkg
 using Parquet2
 using DataFrames
 using Hyperopt

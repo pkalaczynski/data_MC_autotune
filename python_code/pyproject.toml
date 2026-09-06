@@ -1,0 +1,20 @@
+[project]
+name = "python-code"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "matplotlib>=3.9.4",
+    "numpy>=2.0.2",
+    "optuna>=4.9.0",
+    "pandas>=2.3.3",
+    "pyarrow>=21.0.0",
+]
+
+[project.scripts]
+python-code = "python_code:main"
+
+[build-system]
+requires = ["uv_build>=0.12.10,<0.13.0"]
+build-backend = "uv_build"
