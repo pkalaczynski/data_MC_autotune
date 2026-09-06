@@ -12,7 +12,7 @@ Julia's job.
 
     uv run python-code run        [--sampler random|tpe] [--n-trials N]
     uv run python-code multi-seed [--sampler random|tpe] [--n-trials N] [--n-repeats N]
-    uv run python-code higgsml    [--parquet-path PATH] [--sampler random|tpe] [--n-trials N]
+    uv run python-code higgsml    [--parquet-path PATH] [--sampler random|tpe] [--n-trials N] [--n-repeats N]
 """
 
 import argparse
@@ -20,6 +20,7 @@ import argparse
 from config import N_REPEATS, N_TRIALS
 from higgsml_optimize import N_TRIALS as HIGGS_N_TRIALS
 from higgsml_optimize import run as run_higgsml
+from higgsml_optimize import run_multi_seed as run_higgsml_multi_seed
 from optimize import run as run_single
 from plotting import plot_before_after
 from run_multi_seed import run_multi_seed
@@ -53,6 +54,13 @@ def main() -> None:
     )
     p_higgs.add_argument("--sampler", choices=["random", "tpe"], default="random")
     p_higgs.add_argument("--n-trials", type=int, default=HIGGS_N_TRIALS)
+    p_higgs.add_argument(
+        "--n-repeats",
+        type=int,
+        default=1,
+        help="Run more than 1 to repeat across sampler seeds and log to CSV, "
+        "same as `multi-seed` does for the synthetic task (default: single run).",
+    )
 
     args = parser.parse_args()
 
@@ -65,9 +73,17 @@ def main() -> None:
     elif args.command == "multi-seed":
         run_multi_seed(args.sampler, args.n_trials, args.n_repeats)
     elif args.command == "higgsml":
-        run_higgsml(
-            args.parquet_path, sampler_name=args.sampler, n_trials=args.n_trials
-        )
+        if args.n_repeats > 1:
+            run_higgsml_multi_seed(
+                args.parquet_path,
+                sampler_name=args.sampler,
+                n_trials=args.n_trials,
+                n_repeats=args.n_repeats,
+            )
+        else:
+            run_higgsml(
+                args.parquet_path, sampler_name=args.sampler, n_trials=args.n_trials
+            )
 
 
 if __name__ == "__main__":
