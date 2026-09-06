@@ -31,3 +31,5 @@ JuliaLocalPreferences.toml
 *.parquet
 *.json
 *.csv
+
+python_code/__pycache__
