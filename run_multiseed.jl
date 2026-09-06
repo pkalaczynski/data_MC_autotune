@@ -11,8 +11,8 @@ include("common.jl")  # ENERGY_BINS, generate_synthetic_data, compute_agreement_
 const N_TRIALS = 150
 const N_REPEATS = 10
 const SEEDS = 42:(42+N_REPEATS-1)          # sampler-only seeds; dataset stays fixed
-const RESULTS_CSV = "julia_results.csv"
-const SUMMARY_CSV = "julia_summary.csv"
+const RESULTS_CSV = "data/julia_results.csv"
+const SUMMARY_CSV = "data/julia_summary.csv"
 
 function append_csv(path, header, row)
     is_new = !isfile(path)

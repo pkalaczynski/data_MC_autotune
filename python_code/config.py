@@ -43,6 +43,7 @@ REPEAT_SEEDS = [RANDOM_SAMPLER_SEED + i for i in range(N_REPEATS)]
 @dataclass(frozen=True)
 class ParamSpec:
     """One tunable cut boundary, matching one `c_xxx = lo:step:hi` line."""
+
     name: str
     low: float
     high: float
