@@ -27,8 +27,8 @@ from statistics import mean, stdev
 from config import N_TRIALS, N_REPEATS, REPEAT_SEEDS
 from optimize import run
 
-RESULTS_CSV = Path("data/python_results.csv")
-SUMMARY_CSV = Path("data/python_summary.csv")
+RESULTS_CSV = Path("output/python_results.csv")
+SUMMARY_CSV = Path("output/python_summary.csv")
 
 RESULTS_FIELDS = [
     "engine",
