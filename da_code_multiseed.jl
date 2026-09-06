@@ -1,3 +1,5 @@
+using Pkg
+Pkg.activate(".")
 using Hyperopt
 using Statistics
 
@@ -8,7 +10,7 @@ include("common.jl")  # ENERGY_BINS, generate_synthetic_data, compute_agreement_
 # ==========================================
 const N_TRIALS = 150
 const N_REPEATS = 10
-const SEEDS = 42:(42 + N_REPEATS - 1)          # sampler-only seeds; dataset stays fixed
+const SEEDS = 42:(42+N_REPEATS-1)          # sampler-only seeds; dataset stays fixed
 const RESULTS_CSV = "julia_results.csv"
 const SUMMARY_CSV = "julia_summary.csv"
 
@@ -58,7 +60,7 @@ for (i, seed) in enumerate(SEEDS)
     println("  [$i/$N_REPEATS] seed=$seed  best_loss=$(round(ho.minimum, digits=4))  time=$(round(elapsed, digits=2))s")
 
     append_csv(RESULTS_CSV, "engine,sampler,sampler_seed,n_trials,best_loss,elapsed_seconds",
-               "julia-hyperopt,random,$seed,$N_TRIALS,$(ho.minimum),$elapsed")
+        "julia-hyperopt,random,$seed,$N_TRIALS,$(ho.minimum),$elapsed")
 end
 
 loss_mean, loss_std = mean(losses), std(losses)
@@ -67,9 +69,9 @@ time_mean, time_std = mean(times), std(times)
 println("\n" * "="^60)
 println("Summary over $N_REPEATS repeats (RandomSampler, $N_TRIALS trials):")
 println("  Best loss (chi2) : $(round(loss_mean, digits=4)) +/- $(round(loss_std, digits=4))  ",
-        "[min $(round(minimum(losses), digits=4)), max $(round(maximum(losses), digits=4))]")
+    "[min $(round(minimum(losses), digits=4)), max $(round(maximum(losses), digits=4))]")
 println("  Wall time (s)    : $(round(time_mean, digits=2)) +/- $(round(time_std, digits=2))  ",
-        "[min $(round(minimum(times), digits=2)), max $(round(maximum(times), digits=2))]")
+    "[min $(round(minimum(times), digits=2)), max $(round(maximum(times), digits=2))]")
 println("="^60)
 
 append_csv(SUMMARY_CSV,

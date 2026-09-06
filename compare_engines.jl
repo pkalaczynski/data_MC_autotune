@@ -1,3 +1,5 @@
+using Pkg
+Pkg.activate(".")
 using DataFrames
 using Statistics
 using CairoMakie
@@ -9,8 +11,8 @@ using Random
 # Run this script from the julia/ directory (same place da_code_multiseed.jl
 # writes julia_results.csv). Adjust these paths if your layout differs.
 const PYTHON_RESULTS_CSV = "../python/python_results.csv"
-const JULIA_RESULTS_CSV  = "julia_results.csv"
-const N_TRIALS_FILTER    = 150   # only compare repeats run with this trial budget
+const JULIA_RESULTS_CSV = "julia_results.csv"
+const N_TRIALS_FILTER = 150   # only compare repeats run with this trial budget
 
 # ==========================================
 # 1. MINIMAL CSV LOADER (Base only -- no CSV.jl dependency)
@@ -67,7 +69,7 @@ df_py = df_py[df_py.n_trials .== N_TRIALS_FILTER, :]
 
 df_jl_random = df_jl[df_jl.sampler .== "random", :]
 df_py_random = df_py[df_py.sampler .== "random", :]
-df_py_tpe    = df_py[df_py.sampler .== "tpe", :]
+df_py_tpe = df_py[df_py.sampler .== "tpe", :]
 
 # ==========================================
 # 3. BUILD GROUPS (skip any engine/sampler combo with no data)
