@@ -10,8 +10,8 @@ using Random
 # ==========================================
 # Run this script from the julia/ directory (same place da_code_multiseed.jl
 # writes julia_results.csv). Adjust these paths if your layout differs.
-const PYTHON_RESULTS_CSV = "../python/python_results.csv"
-const JULIA_RESULTS_CSV = "julia_results.csv"
+const PYTHON_RESULTS_CSV = "../python_code/output/python_results.csv"
+const JULIA_RESULTS_CSV = "output/julia_results.csv"
 const N_TRIALS_FILTER = 150   # only compare repeats run with this trial budget
 
 # ==========================================
@@ -118,7 +118,6 @@ println()
 # ==========================================
 # 5. PLOTTING (boxplots + jittered individual repeats)
 # ==========================================
-mkpath("plots")
 Random.seed!(1)  # only used for the visual jitter below, not the comparison itself
 
 fig = Figure(size=(1000, 480), font="DejaVu Sans")
@@ -147,6 +146,6 @@ for (i, (label, df, color)) in enumerate(groups)
     scatter!(ax_time, fill(i, nrow(df)) .+ jitter, df.elapsed_seconds, color=(:black, 0.55), markersize=7)
 end
 
-save("plots/engine_comparison.png", fig, px_per_unit=2)
-save("plots/engine_comparison.pdf", fig)
-println("Saved comparison figure to 'plots/engine_comparison.png' and '.pdf'")
+save("output/engine_comparison.png", fig, px_per_unit=2)
+save("output/engine_comparison.pdf", fig)
+println("Saved comparison figure to 'output/engine_comparison.png' and '.pdf'")

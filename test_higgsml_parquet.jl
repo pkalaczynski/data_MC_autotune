@@ -114,7 +114,6 @@ w_mc_after_norm = h_mc_after.weights .* (sum(h_data_after.weights) / sum(h_mc_af
 # 4. PLOTTING THE COMPARISON (UNIFIED GLOBAL GRID LAYOUT)
 # ==========================================
 println("Generating publication-quality comparison plots with CairoMakie...")
-mkpath("plots")
 
 df_baseline = df_all[
     (df_all.PRI_had_pt .> 26.0) .& (df_all.PRI_lep_pt .> 20.0) .& (df_all.PRI_jet_leading_pt .> 26.0) .& (df_all.PRI_jet_subleading_pt .> 26.0), :]
@@ -182,11 +181,11 @@ ylims!(ax3_ratio, 0.4, 1.6)
 
 # Inject gridlines and configurations
 for ax in [ax1_main, ax1_ratio, ax2_main, ax2_ratio, ax3_main, ax3_ratio]
-    ax.xgridvisible = true;
+    ax.xgridvisible = true
     ax.ygridvisible = true
-    ax.xgridstyle = :dash;
+    ax.xgridstyle = :dash
     ax.ygridstyle = :dash
-    ax.xgridcolor = (:gray, 0.22);
+    ax.xgridcolor = (:gray, 0.22)
     ax.ygridcolor = (:gray, 0.22)
 end
 
@@ -217,8 +216,8 @@ Tuned Cuts:
 """
 Label(gl4[1, 1], cuts_text, justification=:left, halign=:left, valign=:top, fontsize=9.5, font="DejaVu Sans Mono")
 
-save("plots/higgsml_optimization_output.png", fig, px_per_unit=2)
-save("plots/higgsml_optimization_output.pdf", fig)
+save("output/higgsml_optimization_output.png", fig, px_per_unit=2)
+save("output/higgsml_optimization_output.pdf", fig)
 println("Successfully exported clean, un-squeezed distribution layouts!")
 
 # ==========================================
@@ -262,11 +261,11 @@ scatter!(ax_space, [opt_lead_l], [opt_sub_l], color=:red, marker=:star5, markers
 Colorbar(fig_diag[1, 3], hm, label="Good Agreement → Discrepancy")
 
 for ax in [ax_loss, ax_space]
-    ax.xgridvisible = true;
-    ax.ygridvisible = true;
-    ax.xgridstyle = :dash;
+    ax.xgridvisible = true
+    ax.ygridvisible = true
+    ax.xgridstyle = :dash
     ax.ygridstyle = :dash
-    ax.xgridcolor = (:gray, 0.2);
+    ax.xgridcolor = (:gray, 0.2)
     ax.ygridcolor = (:gray, 0.2)
 end
 
@@ -274,5 +273,5 @@ colsize!(fig_diag.layout, 1, Relative(0.46))
 colsize!(fig_diag.layout, 2, Relative(0.44))
 colsize!(fig_diag.layout, 3, Relative(0.10))
 
-save("plots/higgsml_search_diagnostics.pdf", fig_diag, px_per_unit=2)
-println("Saved accelerated diagnostics grid asset to 'plots/higgsml_search_diagnostics.png'!")
+save("output/higgsml_search_diagnostics.pdf", fig_diag, px_per_unit=2)
+println("Saved accelerated diagnostics grid asset to 'output/higgsml_search_diagnostics.png'!")
