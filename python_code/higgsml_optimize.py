@@ -175,7 +175,7 @@ def run(parquet_path: str, sampler_name: str = "random", n_trials: int = N_TRIAL
         "elapsed_seconds": elapsed,
         "best_cuts": {name: best.params[name] for name in CUT_ORDER},
     }
-    with open(f"open/higgsml_results_{sampler_name}.json", "w") as f:
+    with open(f"output/higgsml_results_{sampler_name}.json", "w") as f:
         json.dump(result, f, indent=2)
     return result, df
 
