@@ -32,4 +32,7 @@ JuliaLocalPreferences.toml
 *.json
 *.csv
 
+# output
+output/*
+
 python_code/__pycache__

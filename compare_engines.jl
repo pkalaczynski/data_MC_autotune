@@ -10,7 +10,7 @@ using Random
 # ==========================================
 # Run this script from the julia/ directory (same place da_code_multiseed.jl
 # writes julia_results.csv). Adjust these paths if your layout differs.
-const PYTHON_RESULTS_CSV = "../python_code/output/python_results.csv"
+const PYTHON_RESULTS_CSV = "python_code/output/python_results.csv"
 const JULIA_RESULTS_CSV = "output/julia_results.csv"
 const N_TRIALS_FILTER = 150   # only compare repeats run with this trial budget
 
