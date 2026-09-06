@@ -25,12 +25,8 @@ from config import (
     CUT_ORDER,
     N_TRIALS,
     RANDOM_SAMPLER_SEED,
-    N_DATA_EVENTS,
-    N_MC_EVENTS,
-    DATA_SEED,
-    MC_SEED,
 )
-from synthetic_data import generate_synthetic_data
+from data_io import load_datasets
 from loss import compute_agreement_loss
 
 optuna.logging.set_verbosity(
@@ -74,9 +70,8 @@ def run(
     a mean/std over repeated optimizer runs.
     """
     if verbose:
-        print("Generating synthetic Data/MC datasets...")
-    df_data = generate_synthetic_data(N_DATA_EVENTS, seed=DATA_SEED, is_mc=False)
-    df_mc = generate_synthetic_data(N_MC_EVENTS, seed=MC_SEED, is_mc=True)
+        print("Loading Data/MC datasets written by Julia...")
+    df_data, df_mc = load_datasets()
 
     if sampler_name == "random":
         sampler = optuna.samplers.RandomSampler(seed=sampler_seed)
@@ -132,8 +127,8 @@ def run(
         "sampler": sampler_name,
         "sampler_seed": sampler_seed,
         "n_trials": n_trials,
-        "n_data_events": N_DATA_EVENTS,
-        "n_mc_events": N_MC_EVENTS,
+        "n_data_events": len(df_data),
+        "n_mc_events": len(df_mc),
         "best_loss": best.value,
         "elapsed_seconds": elapsed,
         "best_cuts": cuts_named,

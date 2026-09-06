@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pandas as pd
 
-DATA_DIR = Path("data")
+DATA_DIR = Path("../data")
 DATA_PATH = DATA_DIR / "synthetic_data.csv"
 MC_PATH = DATA_DIR / "synthetic_mc.csv"
 
