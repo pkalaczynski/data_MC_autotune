@@ -50,7 +50,7 @@ def main() -> None:
         "higgsml", help="Run the 8D Optuna tuning on the real HiggsML parquet file"
     )
     p_higgs.add_argument(
-        "--parquet-path", default="data/FAIR_Universe_HiggsML_data.parquet"
+        "--parquet-path", default="../data/FAIR_Universe_HiggsML_data.parquet"
     )
     p_higgs.add_argument("--sampler", choices=["random", "tpe"], default="random")
     p_higgs.add_argument("--n-trials", type=int, default=HIGGS_N_TRIALS)

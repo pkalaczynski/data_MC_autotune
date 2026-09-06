@@ -36,8 +36,8 @@ import optuna
 
 optuna.logging.set_verbosity(optuna.logging.WARNING)
 
-RESULTS_CSV = Path("output/higgsml_results.csv")
-SUMMARY_CSV = Path("output/higgsml_summary.csv")
+RESULTS_CSV = Path("output/higgsml_python_results.csv")
+SUMMARY_CSV = Path("output/higgsml_python_summary.csv")
 RESULTS_FIELDS = [
     "engine",
     "task",
@@ -321,7 +321,7 @@ def run_multi_seed(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--parquet-path", default="data/FAIR_Universe_HiggsML_data.parquet"
+        "--parquet-path", default="../data/FAIR_Universe_HiggsML_data.parquet"
     )
     parser.add_argument("--sampler", choices=["random", "tpe"], default="random")
     parser.add_argument("--n-trials", type=int, default=N_TRIALS)
