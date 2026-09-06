@@ -68,8 +68,8 @@ julia da_code.jl                 # single run + its own before/after plot
 julia da_code_multiseed.jl       # 10 repeats -> julia_results.csv / julia_summary.csv
 
 # Python (reads the same data/*.csv Julia just wrote)
-uv run python-code run --sampler random --n-trials 150         # single run + its own diagnostic plot
-uv run python-code multi-seed --sampler random --n-repeats 10  # -> python_results.csv / python_summary.csv
+uv run python cli.py run --sampler random --n-trials 150         # single run + its own diagnostic plot
+uv run python cli.py multi-seed --sampler random --n-repeats 10  # -> python_results.csv / python_summary.csv
 ```
 
 If you skip step 1, Python's `run`/`multi-seed` will fail with a clear
