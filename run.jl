@@ -1,3 +1,5 @@
+using Pkg
+Pkg.activate(".")
 using DataFrames
 using StatsBase
 using Hyperopt
@@ -5,17 +7,21 @@ using CairoMakie
 using Random
 using PairPlots
 
-include("common.jl")   # ENERGY_BINS, SIGNAL_MIN, SIGNAL_MAX, compute_agreement_loss, load_or_generate
+include("common.jl")  # ENERGY_BINS, SIGNAL_MIN/MAX, generate_synthetic_data,
+# compute_agreement_loss, load_or_generate
+include("hyperopt_diagnostics.jl")  # plot_convergence, plot_pairwise_heatmaps, plot_parallel_coordinates
 
+# ==========================================
+# 1. LOAD (OR GENERATE, ON FIRST RUN) THE SYNTHETIC DATA/MC PAIR
+# ==========================================
 data_raw, mc_raw = load_or_generate()
 
 # ==========================================
-# 3. HYPERPARAMETER TUNING LOOP (EXPANDED SEARCH SPACE)
+# 2. HYPERPARAMETER TUNING LOOP (EXPANDED SEARCH SPACE)
 # ==========================================
 println("Running 12D two-sided hyperparameter tuning loop via Hyperopt...")
 t_start = time()
 
-# FIXED: Upper bounds expanded significantly to allow windows to stay wide open
 ho = @hyperopt for i = 150,
     sampler = RandomSampler(),
     c_chi2_l = 0.0:0.5:1.0, c_chi2_h = 3.5:0.5:8.0,
@@ -55,6 +61,19 @@ println("  hadronic_fraction : [", round(c_had_l, digits=2), ", ", round(c_had_h
 println("  vertex_dist       : [", round(c_vtx_l, digits=2), ", ", round(c_vtx_h, digits=2), "]")
 println("="^40 * "\n")
 
+# ==========================================
+# 2b. HYPEROPT DIAGNOSTIC PLOTS (convergence, loss landscape, parallel coords)
+# ==========================================
+const PARAM_NAMES_12D = [
+    :c_chi2_l, :c_chi2_h, :c_iso_l, :c_iso_h, :c_hits_l, :c_hits_h,
+    :c_time_l, :c_time_h, :c_had_l, :c_had_h, :c_vtx_l, :c_vtx_h,
+]  # must match the @hyperopt declaration order above exactly
+
+plot_convergence(ho; title="12D Quality-Window Tuning (RandomSampler)", out_path="output/convergence")
+plot_pairwise_heatmaps(ho, PARAM_NAMES_12D, default_lo_hi_pairs(length(PARAM_NAMES_12D));
+    out_path="output/loss_landscape")
+plot_parallel_coordinates(ho, PARAM_NAMES_12D; out_path="output/parallel_coordinates")
+
 # Apply 12D constraints to filter the data array blocks
 d_opt = data_raw[
     (c_chi2_l .<= data_raw.track_chi2 .<= c_chi2_h) .& (c_iso_l .<= data_raw.isolation .<= c_iso_h) .& (c_hits_l .<= data_raw.hits_count .<= c_hits_h) .& (c_time_l .<= data_raw.timing_ns .<= c_time_h) .& (c_had_l .<= data_raw.hadronic_fraction .<= c_had_h) .& (c_vtx_l .<= data_raw.vertex_dist .<= c_vtx_h), :]
@@ -67,7 +86,7 @@ h_mc_after = fit(Histogram, m_opt.energy, ENERGY_BINS)
 w_mc_after_norm = h_mc_after.weights .* (sum(h_data_after.weights) / sum(h_mc_after.weights))
 
 # ==========================================
-# 4. PLOTTING THE OUTCOME (WITH LOG SYNC & GRIDLINES)
+# 3. PLOTTING THE OUTCOME (WITH LOG SYNC & GRIDLINES)
 # ==========================================
 println("Generating publication-quality main/ratio plots with CairoMakie...")
 
@@ -181,4 +200,4 @@ rowsize!(gl3, 2, Auto())
 # Save the final synced vector graphic assets
 save("output/energy_distribution_comparison.png", fig, px_per_unit=2)
 save("output/energy_distribution_comparison.pdf", fig)
-println("Saved complete synchronized assets to 'output/energy_distribution_comparison.png' and 'output/energy_distribution_comparison.pdf'")
+println("Saved complete synchronized assets to 'energy_distribution_comparison.png' and '.pdf'")

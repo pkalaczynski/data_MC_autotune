@@ -74,12 +74,12 @@ def append_csv(path: Path, fieldnames, row: dict):
 
 
 # ------------------------------------------------------------------
-# Config (mirrors the `const` block in test_higgsml_parquet.jl)
+# Config (mirrors the `const` block in higgsml_multiseed.jl)
 # ------------------------------------------------------------------
 TEST_BINS = np.arange(0.0, 164.0, 4.0)  # 0.0:4.0:160.0
 REJECT_MIN = 40.0
 REJECT_MAX = 70.0
-N_SUBSAMPLE = 500_000
+N_SUBSAMPLE = 50_000_000
 SEED = 42
 N_TRIALS = 500
 N_REPEATS = 10
