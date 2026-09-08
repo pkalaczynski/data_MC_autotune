@@ -10,7 +10,7 @@ using Random
 const TEST_BINS = 0.0:4.0:160.0
 const REJECT_MIN = 40.0
 const REJECT_MAX = 70.0
-const N_SUBSAMPLE = 50_000_000
+const N_SUBSAMPLE = 50_000
 const SUBSAMPLE_SEED = 42  # fixed -- the row subsample stays the same across every repeat;
 # only the optimizer's own seed varies (see higgsml_multiseed.jl)
 
