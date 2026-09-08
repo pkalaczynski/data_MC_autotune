@@ -8,9 +8,9 @@ using Random
 # SHARED CONSTANTS (mirrors the `const` block in test_higgsml_parquet.jl)
 # ==========================================
 const TEST_BINS = 0.0:4.0:160.0
-const REJECT_MIN = 40.0
-const REJECT_MAX = 70.0
-const N_SUBSAMPLE = 50_000
+const REJECT_MIN = 10.0
+const REJECT_MAX = 40.0
+const N_SUBSAMPLE = 100_000
 const SUBSAMPLE_SEED = 42  # fixed -- the row subsample stays the same across every repeat;
 # only the optimizer's own seed varies (see higgsml_multiseed.jl)
 

@@ -131,14 +131,39 @@ weighted_hist(df) = isempty(df.PRI_met) ? zeros(length(TEST_BINS) - 1) :
                     fit(Histogram, df.PRI_met, weights(df.weights), TEST_BINS).weights
 
 bin_edges = collect(TEST_BINS)
+bin_centers = 0.5 .* (bin_edges[1:(end-1)] .+ bin_edges[2:end])
+const SIDEBAND_MASK = (bin_centers .< REJECT_MIN) .| (bin_centers .> REJECT_MAX)
+
+"""
+    sideband_chi2(data_total, mc_total)
+
+Data-vs-MC chi2 in the sideband bins only (same convention as
+common.jl's compute_agreement_loss on the synthetic 12D task):
+sum((data - mc)^2 / (data + mc)) over bins outside [REJECT_MIN, REJECT_MAX],
+skipping empty bins. Purely a display/diagnostic metric for the plot below
+-- it is NOT the objective compute_phase_space_loss actually optimizes
+against (that one compares weighted MC to a flat mean, with no separate
+"Data" side; see common_higgsml.jl), so don't expect the two to match.
+"""
+function sideband_chi2(data_total, mc_total)
+    chi2 = 0.0
+    for i in findall(SIDEBAND_MASK)
+        d, m = data_total[i], mc_total[i]
+        if d + m > 0
+            chi2 += (d - m)^2 / (d + m)
+        end
+    end
+    return chi2
+end
 
 """
     panel_histograms(df)
 
-Returns (data_sig, data_bkg, mc_sig, mc_bkg, ratio) for one selection's
-DataFrame: Data (unweighted counts) and MC (weighted yields, both
-split into signal/background), plus MC rate-normalized to Data's total
-so the Data/MC ratio is meaningful.
+Returns (data_sig, data_bkg, mc_sig, mc_bkg, ratio, chi2) for one
+selection's DataFrame: Data (unweighted counts) and MC (weighted yields,
+both split into signal/background), MC rate-normalized to Data's total so
+the Data/MC ratio is meaningful, and the sideband Data-vs-MC chi2 (see
+sideband_chi2 above).
 """
 function panel_histograms(df)
     d_sig, d_bkg = split_signal_background(df)
@@ -157,8 +182,9 @@ function panel_histograms(df)
     mc_total = mc_sig .+ mc_bkg
 
     ratio = [m > 0 ? d / m : 1.0 for (d, m) in zip(data_total, mc_total)]
+    chi2 = sideband_chi2(data_total, mc_total)
 
-    return data_sig, data_bkg, mc_sig, mc_bkg, ratio
+    return data_sig, data_bkg, mc_sig, mc_bkg, ratio, chi2
 end
 
 panels = [
@@ -170,100 +196,118 @@ panels = [
 # ==========================================
 # 5. PLOTTING: 3-PANEL DATA/MC COMPARISON (SIGNAL + BACKGROUND, WITH RATIO)
 # ==========================================
-println("Generating 3-panel HiggsML Data/MC comparison with CairoMakie...")
+"""
+    make_higgsml_comparison_plot(panels, bin_edges)
 
-fig = Figure(size=(1500, 520), font="DejaVu Sans")
+Builds and saves the 3-panel Data/MC comparison figure. Wrapped in a
+function (rather than left as top-level code) so that the
+p_*_first legend-handle variables assigned inside the `for` loop use
+normal function-local scoping -- at top level, Julia's soft-scope rules
+would otherwise treat each loop-body assignment as a new local shadowing
+the outer variable, silently leaving the outer one as `nothing`.
+"""
+function make_higgsml_comparison_plot(panels, bin_edges)
+    fig = Figure(size=(1500, 520), font="DejaVu Sans")
 
-gl_main = [fig[1, i] = GridLayout() for i in 1:3]
-gl_side = fig[1, 4] = GridLayout()
-colsize!(fig.layout, 4, Relative(0.17))
+    gl_main = [fig[1, i] = GridLayout() for i in 1:3]
+    gl_side = fig[1, 4] = GridLayout()
+    colsize!(fig.layout, 4, Relative(0.17))
 
-axes_top = Axis[]
-axes_ratio = Axis[]
-p_data_sig_first = p_data_bkg_first = p_mc_sig_first = p_mc_bkg_first = nothing
+    axes_top = Axis[]
+    axes_ratio = Axis[]
+    p_data_sig_first = p_data_bkg_first = p_mc_sig_first = p_mc_bkg_first = nothing
 
-for (i, (title, df, color)) in enumerate(panels)
-    data_sig, data_bkg, mc_sig, mc_bkg, ratio = panel_histograms(df)
+    for (i, (title, df, color)) in enumerate(panels)
+        data_sig, data_bkg, mc_sig, mc_bkg, ratio, chi2 = panel_histograms(df)
 
-    ax_top = Axis(gl_main[i][1, 1],
-        title=title,
-        ylabel=i == 1 ? "Weighted Events" : "",
-        yticklabelsvisible=(i == 1),
-        xticklabelsvisible=false, xticksvisible=false,
-        xgridvisible=true, ygridvisible=true,
-        xgridstyle=:dash, ygridstyle=:dash,
-        xgridcolor=(:gray, 0.25), ygridcolor=(:gray, 0.25),
-    )
-    ax_ratio = Axis(gl_main[i][2, 1],
-        xlabel="Missing ET [GeV]",
-        ylabel=i == 1 ? "Data / MC" : "",
-        yticklabelsvisible=(i == 1),
-        xgridvisible=true, ygridvisible=true,
-        xgridstyle=:dash, ygridstyle=:dash,
-        xgridcolor=(:gray, 0.25), ygridcolor=(:gray, 0.25),
-    )
-    rowsize!(gl_main[i], 1, Relative(3 / 4))
+        ax_top = Axis(gl_main[i][1, 1],
+            title=title,
+            ylabel=i == 1 ? "Weighted Events" : "",
+            yticklabelsvisible=(i == 1),
+            xticklabelsvisible=false, xticksvisible=false,
+            xgridvisible=true, ygridvisible=true,
+            xgridstyle=:dash, ygridstyle=:dash,
+            xgridcolor=(:gray, 0.25), ygridcolor=(:gray, 0.25),
+        )
+        ax_ratio = Axis(gl_main[i][2, 1],
+            xlabel="Missing ET [GeV]",
+            ylabel=i == 1 ? "Data / MC" : "",
+            yticklabelsvisible=(i == 1),
+            xgridvisible=true, ygridvisible=true,
+            xgridstyle=:dash, ygridstyle=:dash,
+            xgridcolor=(:gray, 0.25), ygridcolor=(:gray, 0.25),
+        )
+        rowsize!(gl_main[i], 1, Relative(3 / 4))
 
-    p_data_sig = stairs!(ax_top, bin_edges, [data_sig; 0], color=:black, linewidth=2.0, step=:post)
-    p_data_bkg = stairs!(ax_top, bin_edges, [data_bkg; 0], color=:black, linewidth=1.3,
-        linestyle=:dot, step=:post)
-    p_mc_sig = stairs!(ax_top, bin_edges, [mc_sig; 0], color=color, linewidth=2.0,
-        linestyle=:dash, step=:post)
-    p_mc_bkg = stairs!(ax_top, bin_edges, [mc_bkg; 0], color=(color, 0.6), linewidth=1.3,
-        linestyle=:dashdot, step=:post)
+        p_data_sig = stairs!(ax_top, bin_edges, [data_sig; 0], color=:black, linewidth=2.0, step=:post)
+        p_data_bkg = stairs!(ax_top, bin_edges, [data_bkg; 0], color=:black, linewidth=1.3,
+            linestyle=:dot, step=:post)
+        p_mc_sig = stairs!(ax_top, bin_edges, [mc_sig; 0], color=color, linewidth=2.0,
+            linestyle=:dash, step=:post)
+        p_mc_bkg = stairs!(ax_top, bin_edges, [mc_bkg; 0], color=(color, 0.6), linewidth=1.3,
+            linestyle=:dashdot, step=:post)
 
-    vspan!(ax_top, [REJECT_MIN], [REJECT_MAX], color=(:red, 0.06))
+        vspan!(ax_top, [REJECT_MIN], [REJECT_MAX], color=(:red, 0.06))
 
-    stairs!(ax_ratio, bin_edges, [ratio; 1.0], color=color, linewidth=1.5, step=:post)
-    hlines!(ax_ratio, [1.0], color=:gray, linestyle=:dash, linewidth=1.2)
-    ylims!(ax_ratio, 0.4, 1.6)
-    vspan!(ax_ratio, [REJECT_MIN], [REJECT_MAX], color=(:red, 0.06))
+        text!(ax_top, 0.97, 0.95, text="χ² (sideband) = $(round(chi2, digits=1))",
+            space=:relative, align=(:right, :top), fontsize=11, color=:black)
 
-    linkxaxes!(ax_top, ax_ratio)
+        stairs!(ax_ratio, bin_edges, [ratio; 1.0], color=color, linewidth=1.5, step=:post)
+        hlines!(ax_ratio, [1.0], color=:gray, linestyle=:dash, linewidth=1.2)
+        ylims!(ax_ratio, 0.4, 1.6)
+        vspan!(ax_ratio, [REJECT_MIN], [REJECT_MAX], color=(:red, 0.06))
 
-    if i == 1
-        p_data_sig_first, p_data_bkg_first = p_data_sig, p_data_bkg
-        p_mc_sig_first, p_mc_bkg_first = p_mc_sig, p_mc_bkg
+        linkxaxes!(ax_top, ax_ratio)
+
+        if i == 1
+            p_data_sig_first, p_data_bkg_first = p_data_sig, p_data_bkg
+            p_mc_sig_first, p_mc_bkg_first = p_mc_sig, p_mc_bkg
+        end
+
+        push!(axes_top, ax_top)
+        push!(axes_ratio, ax_ratio)
+
+        rowgap!(gl_main[i], 6)
     end
 
-    push!(axes_top, ax_top)
-    push!(axes_ratio, ax_ratio)
+    linkyaxes!(axes_top...)
+    linkyaxes!(axes_ratio...)
 
-    rowgap!(gl_main[i], 6)
+    Legend(gl_side[1, 1],
+        [p_data_sig_first, p_data_bkg_first, p_mc_sig_first, p_mc_bkg_first],
+        ["Data (signal)", "Data (background)", "MC (signal)", "MC (background)"],
+        framevisible=false, halign=:left, fontsize=10
+    )
+
+    cuts_text = """
+    Benchmark Cuts:
+    • pT Had     : > $(round(DEFAULT_CUTS.had_l, digits=1)) GeV
+    • pT Lep     : > $(round(DEFAULT_CUTS.lep_l, digits=1)) GeV
+    • pT Leading Jet: > $(round(DEFAULT_CUTS.lead_l, digits=1)) GeV
+    • pT Sublead Jet: > $(round(DEFAULT_CUTS.sub_l, digits=1)) GeV
+
+    Tuned Cuts:
+    • pT Had     : [$(round(c_had_l, digits=1)), $(round(c_had_h, digits=1))]
+    • pT Lep     : [$(round(c_lep_l, digits=1)), $(round(c_lep_h, digits=1))]
+    • pT Leading Jet: [$(round(c_lead_l, digits=1)), $(round(c_lead_h, digits=1))]
+    • pT Sublead Jet: [$(round(c_sub_l, digits=1)), $(round(c_sub_h, digits=1))]
+
+    Shaded band: sideband
+    reject window
+    [$(REJECT_MIN), $(REJECT_MAX)] GeV
+    """
+
+    Label(gl_side[2, 1], cuts_text, justification=:left, halign=:left, valign=:top,
+        fontsize=9, font="DejaVu Sans Mono")
+    rowsize!(gl_side, 1, Auto())
+    rowsize!(gl_side, 2, Auto())
+
+    save("output/higgsml_energy_distribution_comparison.png", fig, px_per_unit=2)
+    save("output/higgsml_energy_distribution_comparison.pdf", fig)
+    println("Saved 3-panel HiggsML Data/MC comparison figure to 'output/higgsml_energy_distribution_comparison.png' and '.pdf'")
+
+    return fig
 end
 
-linkyaxes!(axes_top...)
-linkyaxes!(axes_ratio...)
-
-Legend(gl_side[1, 1],
-    [p_data_sig_first, p_data_bkg_first, p_mc_sig_first, p_mc_bkg_first],
-    ["Data (signal)", "Data (background)", "MC (signal)", "MC (background)"],
-    framevisible=false, halign=:left, fontsize=10
-)
-
-cuts_text = """
-Benchmark Cuts:
-• pT Had     : > $(round(DEFAULT_CUTS.had_l, digits=1)) GeV
-• pT Lep     : > $(round(DEFAULT_CUTS.lep_l, digits=1)) GeV
-• pT Leading Jet: > $(round(DEFAULT_CUTS.lead_l, digits=1)) GeV
-• pT Sublead Jet: > $(round(DEFAULT_CUTS.sub_l, digits=1)) GeV
-
-Tuned Cuts:
-• pT Had     : [$(round(c_had_l, digits=1)), $(round(c_had_h, digits=1))]
-• pT Lep     : [$(round(c_lep_l, digits=1)), $(round(c_lep_h, digits=1))]
-• pT Leading Jet: [$(round(c_lead_l, digits=1)), $(round(c_lead_h, digits=1))]
-• pT Sublead Jet: [$(round(c_sub_l, digits=1)), $(round(c_sub_h, digits=1))]
-
-Shaded band: sideband
-reject window
-[$(REJECT_MIN), $(REJECT_MAX)] GeV
-"""
-
-Label(gl_side[2, 1], cuts_text, justification=:left, halign=:left, valign=:top,
-    fontsize=9, font="DejaVu Sans Mono")
-rowsize!(gl_side, 1, Auto())
-rowsize!(gl_side, 2, Auto())
-
-save("output/higgsml_energy_distribution_comparison.png", fig, px_per_unit=2)
-save("output/higgsml_energy_distribution_comparison.pdf", fig)
-println("Saved 3-panel HiggsML Data/MC comparison figure to 'output/higgsml_energy_distribution_comparison.png' and '.pdf'")
+println("Generating 3-panel HiggsML Data/MC comparison with CairoMakie...")
+make_higgsml_comparison_plot(panels, bin_edges)
